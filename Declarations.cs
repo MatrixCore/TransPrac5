@@ -47,9 +47,33 @@
 
     const int
       noSym        =  0,
-      EOFSym       =  1;
+      EOFSym       =  1,
+      periodSym = 2,
+      commaSym = 3,
+      dPeriodSym = 4,
+      numSym = 5,
+      scSym = 6,
+      cSym = 7,
+      eqlSym = 8,
+      charSym = 9,
+      idSym = 10,
+      endSym = 11,
+      ofSym = 12,
+      arraySym = 13,
+      pointSym = 14,
+      recSym = 15,
+      setSym = 16,
+      toSym = 17,
+      typeSym = 18,
+      varSym = 19,
+      lsbSym = 20, 
+      rsbSym = 21,
+      lparenSym = 22,
+      rparenSym = 23,
+      lcbSym = 24,
+      rcbSym = 25;
 
-      // and others like this
+    // and others like this
 
     // +++++++++++++++++++++++++++++ Character Handler ++++++++++++++++++++++++++
 
@@ -77,14 +101,110 @@
     // Declaring sym as a global variable is done for expediency - global variables
     // are not always a good thing
 
-    static Token sym;
-
+    static Token sym; 
     static void GetSym() {
-    // Scans for next sym from input
-      while (ch > EOF && ch <= ' ') GetChar();
-      StringBuilder symLex = new StringBuilder();
-      int symKind = noSym;
+        // Scans for next sym from input
+        while (ch > EOF && ch <= ' ') GetChar();
+        StringBuilder symLex = new StringBuilder();
+        int symKind = noSym;
+    if (char.IsDigit(ch))
+    {
+        while (char.IsDigit(ch)) { symLex.Append(ch); GetChar(); }
+        symKind = numSym;
+    }
+    else if (char.IsLetter(ch))
+    {
+        while (char.IsDigit(ch) || char.IsLetter(ch)) { symLex.Append(ch); GetChar(); }
+        switch (symLex.ToString())
+        {
+            case "END":
+                symKind = endSym;
+                break;
+            case "OF":
+                symKind = ofSym;
+                break;
+            case "ARRAY":
+                symKind = arraySym;
+                break;
+            case "POINTER":
+                symKind = pointSym;
+                break;
+            case "RECORD":
+                symKind = recSym;
+                break;
+            case "SET":
+                symKind = setSym;
+                break;
+            case "TO":
+                symKind = toSym;
+                break;
+            case "TYPE":
+                symKind = typeSym;
+                break;
+            case "VAR":
+                symKind = varSym;
+                break;
+            default:
+                symKind = idSym;
+                break;
+        }
+    }
 
+    else
+    {
+        switch (ch)
+        {
+            case ',':
+                symKind = commaSym;
+                symLex.Append(ch);
+                break;
+            case '.':
+                symLex.Append(ch);
+                GetChar();
+                if (ch == '.') { symKind = dPeriodSym; symLex.Append(ch); }
+                else symKind = periodSym;
+                break;
+            case ':':
+                symKind = cSym;
+                symLex.Append(ch);
+                break;
+            case ';':
+                symKind = scSym;
+                symLex.Append(ch);
+                break;
+            case '=':
+                symKind = eqlSym;
+                symLex.Append(ch);
+                break;
+            case '[':
+                symKind = lsbSym;
+                symLex.Append(ch);
+                break;
+            case ']':
+                symKind = rsbSym;
+                symLex.Append(ch);
+                break;
+            case '(':
+                symKind = lparenSym;
+                symLex.Append(ch);
+                break;
+            case ')':
+                symKind = rparenSym;
+                symLex.Append(ch);
+                break;
+            case '{':
+                symKind = lcbSym;
+                symLex.Append(ch);
+                break;
+            case '}':
+                symKind = rcbSym;
+                symLex.Append(ch);
+                break;
+            default:
+                symKind = noSym;
+                break;
+        }
+    }
       // over to you!
 
       sym = new Token(symKind, symLex.ToString());
