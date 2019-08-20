@@ -45,7 +45,7 @@
 
     // +++++++++++++++++++++++  token kinds enumeration +++++++++++++++++++++++++
 
-    const int
+    const int //Added the additional symbols 
       noSym        =  0,
       EOFSym       =  1,
       periodSym    = 2,
@@ -71,7 +71,9 @@
       lparenSym    = 22,
       rparenSym    = 23,
       lcbSym       = 24,
-      rcbSym       = 25;
+      rcbSym       = 25,
+      comSym       = 26;
+
 
     // and others like this
 
@@ -107,16 +109,20 @@
         while (ch > EOF && ch <= ' ') GetChar();
         StringBuilder symLex = new StringBuilder();
         int symKind = noSym;
-    if (char.IsDigit(ch))
+    //The following if, if else, amd else statements are the foundations of this scanner
+
+    if (char.IsDigit(ch)) //First if statement checks if the first char is a digit. If it is, then it has to be a number symbol. 
     {
-        while (char.IsDigit(ch)) { symLex.Append(ch); GetChar(); }
+        while (char.IsDigit(ch)) { symLex.Append(ch); GetChar(); } //While loop builds up the numSym
         symKind = numSym;
         
     }
-    else if (char.IsLetter(ch))
+    else if (char.IsLetter(ch)) //This else if statement deals with identifyers and reserved keywords
     {
-        while (char.IsDigit(ch) || char.IsLetter(ch)) { symLex.Append(ch); GetChar(); }
-        switch (symLex.ToString())
+        while (char.IsDigit(ch) || char.IsLetter(ch)) { symLex.Append(ch); GetChar(); } 
+        // Because our scanner allows both numbers AND digits WITHIN (not beginning) 
+        // the identifyer, this while loop builds up the potential identifyer
+        switch (symLex.ToString())                                                     
         {
             case "END":
                 symKind = endSym;
@@ -151,7 +157,7 @@
         }
     }
 
-    else
+    else //Finally we've hit the else statement containing all the other symbols, most of which are one character long.
     {
         switch (ch)
         {
@@ -163,9 +169,10 @@
             case '.':
                 symLex.Append(ch);
                 GetChar();
-                if (ch == '.') { symKind = dPeriodSym; symLex.Append(ch); }
+                if (ch == '.') { symKind = dPeriodSym; symLex.Append(ch); GetChar(); break;}
+                //Seeing as a '.' could be a period symbol or a double period symbol, 
+                //this if statement checks one char forwardto see which one it is.
                 else symKind = periodSym;
-                GetChar();
                 break;
             case ':':
                 symKind = cSym;
@@ -193,9 +200,25 @@
                 GetChar();
                 break;
             case '(':
-                symKind = lparenSym;
                 symLex.Append(ch);
                 GetChar();
+                if (ch=='*')
+                {
+                    while(true)
+                    {
+                        symLex.Append(ch);
+                        GetChar();
+                        if(ch=='*')
+                        {
+                            GetChar(); 
+                            if(ch==')') symLex.Append(ch); symKind = comSym; GetChar(); break;
+                            //Not knowing whether to completly ignore the comments or make them
+                            //a symbol, I decided to make it a symbol to make testing clearer.
+                        }
+                    }
+
+                }
+                symKind = lparenSym;
                 break;
             case ')':
                 symKind = rparenSym;
