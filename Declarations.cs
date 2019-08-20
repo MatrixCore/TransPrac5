@@ -48,30 +48,30 @@
     const int
       noSym        =  0,
       EOFSym       =  1,
-      periodSym = 2,
-      commaSym = 3,
-      dPeriodSym = 4,
-      numSym = 5,
-      scSym = 6,
-      cSym = 7,
-      eqlSym = 8,
-      charSym = 9,
-      idSym = 10,
-      endSym = 11,
-      ofSym = 12,
-      arraySym = 13,
-      pointSym = 14,
-      recSym = 15,
-      setSym = 16,
-      toSym = 17,
-      typeSym = 18,
-      varSym = 19,
-      lsbSym = 20, 
-      rsbSym = 21,
-      lparenSym = 22,
-      rparenSym = 23,
-      lcbSym = 24,
-      rcbSym = 25;
+      periodSym    = 2,
+      commaSym     = 3,
+      dPeriodSym   = 4,
+      numSym       = 5,
+      scSym        = 6,
+      cSym         = 7,
+      eqlSym       = 8,
+      charSym      = 9,
+      idSym        = 10,
+      endSym       = 11,
+      ofSym        = 12,
+      arraySym     = 13,
+      pointSym     = 14,
+      recSym       = 15,
+      setSym       = 16,
+      toSym        = 17,
+      typeSym      = 18,
+      varSym       = 19,
+      lsbSym       = 20, 
+      rsbSym       = 21,
+      lparenSym    = 22,
+      rparenSym    = 23,
+      lcbSym       = 24,
+      rcbSym       = 25;
 
     // and others like this
 
@@ -111,6 +111,7 @@
     {
         while (char.IsDigit(ch)) { symLex.Append(ch); GetChar(); }
         symKind = numSym;
+        
     }
     else if (char.IsLetter(ch))
     {
@@ -157,51 +158,67 @@
             case ',':
                 symKind = commaSym;
                 symLex.Append(ch);
+                GetChar();
                 break;
             case '.':
                 symLex.Append(ch);
                 GetChar();
                 if (ch == '.') { symKind = dPeriodSym; symLex.Append(ch); }
                 else symKind = periodSym;
+                GetChar();
                 break;
             case ':':
                 symKind = cSym;
                 symLex.Append(ch);
+                GetChar();
                 break;
             case ';':
                 symKind = scSym;
                 symLex.Append(ch);
+                GetChar();
                 break;
             case '=':
                 symKind = eqlSym;
                 symLex.Append(ch);
+                GetChar();
                 break;
             case '[':
                 symKind = lsbSym;
                 symLex.Append(ch);
+                GetChar();
                 break;
             case ']':
                 symKind = rsbSym;
                 symLex.Append(ch);
+                GetChar();
                 break;
             case '(':
                 symKind = lparenSym;
                 symLex.Append(ch);
+                GetChar();
                 break;
             case ')':
                 symKind = rparenSym;
                 symLex.Append(ch);
+                GetChar();
                 break;
             case '{':
                 symKind = lcbSym;
                 symLex.Append(ch);
+                GetChar();
                 break;
             case '}':
                 symKind = rcbSym;
                 symLex.Append(ch);
+                GetChar();
+                break;
+            case '\0' :
+                symKind = EOFSym;
+                symLex.Append(ch);                
                 break;
             default:
                 symKind = noSym;
+                GetChar();
                 break;
         }
     }
