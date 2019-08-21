@@ -46,14 +46,14 @@
     // +++++++++++++++++++++++  token kinds enumeration +++++++++++++++++++++++++
 
     const int //Added the additional symbols 
-      noSym        =  0,
-      EOFSym       =  1,
+      noSym        = 0,
+      EOFSym       = 1,
       periodSym    = 2,
       commaSym     = 3,
       dPeriodSym   = 4,
       numSym       = 5,
       scSym        = 6,
-      cSym         = 7,
+      colonSym     = 7,
       eqlSym       = 8,
       charSym      = 9,
       idSym        = 10,
@@ -121,7 +121,7 @@
     {
         while (char.IsDigit(ch) || char.IsLetter(ch)) { symLex.Append(ch); GetChar(); } 
         // Because our scanner allows both numbers AND digits WITHIN (not beginning) 
-        // the identifyer, this while loop builds up the potential identifyer
+        // the identifier, this while loop builds up the potential identifier
         switch (symLex.ToString())                                                     
         {
             case "END":
@@ -175,7 +175,7 @@
                 else symKind = periodSym;
                 break;
             case ':':
-                symKind = cSym;
+                symKind = colonSym;
                 symLex.Append(ch);
                 GetChar();
                 break;
@@ -250,8 +250,6 @@
       sym = new Token(symKind, symLex.ToString());
     } // GetSym
 
-  /*  ++++ Commented out for the moment
-
     // +++++++++++++++++++++++++++++++ Parser +++++++++++++++++++++++++++++++++++
 
     static void Accept(int wantedSym, string errorMessage) {
@@ -264,9 +262,222 @@
       if (allowedSet.Contains(sym.kind)) GetSym(); else Abort(errorMessage);
     } // Accept
 
-    static void Mod2Decl() {}
+    static void Mod2Decl()
+    {
+        IntSet temp = new IntSet(typeSym, varSym);
+        while (temp.Contains(sym.kind)) // kind of TypeDecl or VarDec
+        {
+            Declaration();
+        }
+    }
 
-  ++++++ */
+    static void Declaration()
+    {
+        switch (sym.kind)
+        {
+            case typeSym:
+                Accept(typeSym, "Expected TYPE");
+                while(sym.kind == idSym)
+                {
+                    TypeDecl();
+                    Accept(scSym, "Expected semi colon - Declaration");
+                }
+                break;
+
+            case varSym:
+                Accept(varSym, "Expected VAR");
+                while(sym.kind == varSym)
+                {
+                    VarDec1();
+                    Accept(scSym, "Expected semi colon - Declaration");
+                }
+                break;
+
+            default:
+                Abort("Invalid declaration - Declaration");
+                break;
+        }
+    }
+
+    static void TypeDecl()
+    {
+        Accept(idSym, "Missing identifer - TypeDec");
+        Accept(eqlSym, "Missing equals - TypeDec");
+        Type();
+    }
+
+    static void VarDec1()
+    {
+        IdentList();
+        Accept(colonSym, "Missing colon - VarDec");
+        Type();
+    }
+
+    static void Type()
+    {
+        switch (sym.kind)
+        {
+            case idSym:
+                SimpleType();
+                break;
+
+            case lparenSym:
+                SimpleType();
+                break;
+
+            case lsbSym:
+                SimpleType();
+                break;
+
+            case arraySym:
+                ArrayType();
+                break;
+
+            case recSym:
+                RecordType();
+                break;
+
+            case setSym:
+                SetType();
+                break;
+
+            case pointSym:
+                PointerType();
+                break;
+
+            default:
+                Abort("Invalid type - Type");
+                break;
+        }
+    }
+
+    static void SimpleType()
+    {
+        switch (sym.kind)
+        {
+            case idSym:
+                QualIdent();
+                if (sym.kind == lsbSym)
+                {
+                    Subrange();
+                }
+                break;
+
+            case lsbSym:
+                Subrange();
+                break;
+
+            case lparenSym:
+                Enumeration();
+                break;
+
+            default:
+                Abort("excuse me, why");
+                break;
+        }
+    }
+
+    static void QualIdent()
+    {
+        Accept(idSym, "Identifier expected - Qualident");
+        while(sym.kind == periodSym)
+        {
+            Accept(periodSym, "Period expected - QualIdent");
+            Accept(idSym, "Identifer expected - QualIdent");
+        }
+    }
+
+    static void Subrange()
+    {
+        Accept(lsbSym, "[ expected - Subrange");
+        Constant();
+        Accept(dPeriodSym, ".. expected - Subrange");
+        Constant();
+        Accept(rsbSym, "] expected - Subrange");
+    }
+
+    static void Constant()
+    {
+        if (sym.kind == numSym)
+        {
+            Accept(numSym, "Number expected - Constant");
+        }
+        else if(sym.kind == idSym)
+        {
+            Accept(idSym, "Identifer expected - Constant");
+        }
+    }
+
+    static void Enumeration()
+    {
+        Accept(rcbSym, "( expected - Enumeration");
+        IdentList();
+        Accept(lcbSym, ") expected - Enumeration");
+    }
+
+    static void IdentList()
+    {
+        Accept(idSym, "Identifier expected - IdentList");
+        while(sym.kind == commaSym)
+        {
+            Accept(commaSym, ", is expected - IdentList");
+            Accept(idSym, "Identifier expected - IdentList");
+        }
+    }
+
+    static void ArrayType()
+    {
+        Accept(arraySym, "Expected key word ARRAY");
+        SimpleType();
+        while (sym.kind == commaSym)
+        {
+            Accept(commaSym, "Comma expected - ArrayType");
+            SimpleType();
+        }
+        Accept(ofSym, "OF expected");
+        Type();
+    }
+
+    static void RecordType()
+    {
+        Accept(recSym, "RECORD expected");
+        FieldList();
+        Accept(endSym, "END expected");
+    }
+
+    static void FieldLists()
+    {
+        FieldList();
+        while(sym.kind == commaSym)
+        {
+            Accept(commaSym, "Comma expected - FieldLists");
+            FieldList();
+        }
+    }
+
+    static void FieldList()
+    {
+        if (sym.kind == idSym)
+        {
+            IdentList();
+            Accept(colonSym, "Colon expected - FieldList");
+            Type();
+        }
+    }
+
+    static void SetType()
+    {
+        Accept(setSym, "SET is expected");
+        Accept(ofSym, "OF is expected");
+        SimpleType();
+    }
+
+    static void PointerType()
+    {
+        Accept(pointSym, "POINTER is expected");
+        Accept(toSym, "TO is expected");
+        Type();
+    }
 
     // +++++++++++++++++++++ Main driver function +++++++++++++++++++++++++++++++
 
@@ -281,22 +492,22 @@
 
       GetChar();                                  // Lookahead character
 
-  //  To test the scanner we can use a loop like the following:
-
+        //  To test the scanner we can use a loop like the following:
+        /*
       do {
         GetSym();                                 // Lookahead symbol
         OutFile.StdOut.Write(sym.kind, 3);
         OutFile.StdOut.WriteLine(" " + sym.val);  // See what we got
       } while (sym.kind != EOFSym);
+    */  
 
-  /*  After the scanner is debugged we shall substitute this code:
+    //After the scanner is debugged we shall substitute this code:
 
       GetSym();                                   // Lookahead symbol
       Mod2Decl();                                 // Start to parse from the goal symbol
       // if we get back here everything must have been satisfactory
       Console.WriteLine("Parsed correctly");
 
-  */
       output.Close();
     } // Main
 
